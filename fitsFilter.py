@@ -2,6 +2,7 @@ import argparse
 import os
 import sys
 import re
+import shutil
 
 from astropy.io import fits
 
@@ -23,19 +24,22 @@ def applyFileFilter(path, filter):
 def applyKeywordFilter(inputList, filter):
     # This actually needs to handle filter expressions
     
-    filteredList = inputList#list(inputList)
+    filteredList = []
 
     #Assumes all ops between keyword-value pairs are ANDs
-    for item in filter:
-        parsedFilter = re.split('=', item)
-        keyword = parsedFilter[0]
-        value = parsedFilter[1]
-
-        for file in filteredList:
-            try:
-                hdu = fits.open(file, ignore_missing_end=True)
-            except OSError as err:
-                pass  # do nothing
+    for file in inputList:
+        #try:
+        hdu = fits.open(file, ignore_missing_end=True)
+        #except OSError as err:
+        #    filteredList.remove(file)
+        #    continue  # do nothing
+        
+        for item in filter:
+            parsedFilter = re.split('=', item)
+            keyword = parsedFilter[0]#.lower()
+            value = parsedFilter[1]#.lower()
+            #print('Filtering list by "{0}"="{1}"...'.format(keyword, value))
+        
             try:
                 valueFound = hdu[0].header[keyword]
             except KeyError:
@@ -46,12 +50,13 @@ def applyKeywordFilter(inputList, filter):
                 hdu.close()
                 continue
             hdu.close()
-    
+   
+            #print('value found "{0}"'.format(valueFound))
             if type(valueFound) is bool:
-                if valueFound != value:
-                    filteredList.remove(file)
-            elif value != str.lower(valueFound):
-                filteredList.remove(file)
+                if valueFound == value:
+                    filteredList.append(file)
+            elif value.lower() == str.lower(valueFound):
+                filteredList.append(file)
                 
     return filteredList
 
@@ -83,7 +88,9 @@ def main(argv):
     if not args.nolist:
         for item in finalList:
             print(item)
+            shutil.copy(item, '/Users/jnoss/dev/test/cte/wf3/ins-regress/uviz-cte-only/')
     
+ 
     if not args.silent:
         print('{0} files found matching file filter AND keyword filter '.format(len(finalList)))
     
