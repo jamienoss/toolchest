@@ -70,6 +70,8 @@ def main(argv):
                             help='Only output final list and nothing else')
     parser.add_argument('--nolist', dest='nolist', action='store_true', default=False,
                             help='Only output stats and not final list')
+    parser.add_argument('-c', dest='copyToPath', metavar='<path>', nargs=1, type=str,
+                             help='Copy all matching data to <path>', default=None)
     args = parser.parse_args(argv)
     
     compiledFileFilter = args.fileFilter[0]#re.compile(args.fileFilter[0])
@@ -88,8 +90,11 @@ def main(argv):
     if not args.nolist:
         for item in finalList:
             print(item)
-            shutil.copy(item, '/Users/jnoss/dev/test/cte/wf3/ins-regress/uviz-cte-only/')
     
+    if args.copyToPath:
+        for item in finalList:
+            print('Copying "{0}"...'.format(item))
+            shutil.copy(item, args.copyToPath[0])
  
     if not args.silent:
         print('{0} files found matching file filter AND keyword filter '.format(len(finalList)))
