@@ -6,18 +6,28 @@ import shutil
 
 from astropy.io import fits
 
-def applyFileFilter(path, filter):
+def applyFileFilter(path, filter, recursive):
     # Figure out how the path gets dealt with and/or included in the regex and thus the
     #actual root of the tree walk
 
     fileList = []
 
-    for root, subDir, files in os.walk(path, topdown=True, followlinks=False):
-        for fname in files:
-            if filter in fname:
-                #if filter.match(fname):
-                fullFilePath = os.path.join(root, fname)
+    if recursive:
+        for root, subDir, files in os.walk(path, topdown=True, followlinks=False):
+            for file in files:
+                if filter in file:
+                    #if filter.match(fname):
+                    fullFilePath = os.path.join(root, file)
+                    fileList.append(fullFilePath)
+    else:
+        ls = os.listdir(path)
+        for file in ls:
+            if filter in file:
+                fullFilePath = os.path.join(path, file)
                 fileList.append(fullFilePath)
+
+    #for file in fileList:
+    #    print(file)
 
     return fileList
 
@@ -29,6 +39,8 @@ def applyKeywordFilter(inputList, filter):
     #Assumes all ops between keyword-value pairs are ANDs
     for file in inputList:
         #try:
+        add = False
+        skipFile = False
         hdu = fits.open(file, ignore_missing_end=True)
         #except OSError as err:
         #    filteredList.remove(file)
@@ -44,20 +56,41 @@ def applyKeywordFilter(inputList, filter):
                 valueFound = hdu[0].header[keyword]
             except KeyError:
                 hdu.close()
-                continue
+                skipFile = True
+                break
     
             if valueFound == None:
                 hdu.close()
-                continue
+                skipFile = True
+                break
             hdu.close()
    
             #print('value found "{0}"'.format(valueFound))
             if type(valueFound) is bool:
-                if valueFound == value:
-                    filteredList.append(file)
+                bValue = None
+                if str.lower(value) == "true" or str.lower(value) == "t":
+                    bValue = True
+                elif str.lower(value) == "false" or str.lower(value) == "f":
+                    bValue = False
+                if bValue and valueFound == bValue:
+                    add = True
+                else:
+                    add = False
+                    break
             elif value.lower() == str.lower(valueFound):
-                filteredList.append(file)
-                
+                add = True
+            else:
+                add = False
+                break
+            
+        if skipFile:
+            continue
+        
+        if add:
+            filteredList.append(file)
+        
+        hdu.close()
+
     return filteredList
 
 def main(argv):
@@ -72,11 +105,12 @@ def main(argv):
                             help='Only output stats and not final list')
     parser.add_argument('-c', dest='copyToPath', metavar='<path>', nargs=1, type=str,
                              help='Copy all matching data to <path>', default=None)
+    parser.add_argument('-r', dest='recursive', action='store_true', default=False,
+                            help='Recursive file search')
     args = parser.parse_args(argv)
     
     compiledFileFilter = args.fileFilter[0]#re.compile(args.fileFilter[0])
-    
-    list = applyFileFilter('./', compiledFileFilter)
+    list = applyFileFilter('./', compiledFileFilter, args.recursive)
     if not args.silent:
         print('{0} files found matching file filter regex'.format(len(list)))
     #for item in list:
