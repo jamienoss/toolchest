@@ -99,7 +99,7 @@ def main(argv):
                         help='root path to files', default='./')
     parser.add_argument('--regex', dest='regex', metavar='<expression>', nargs='*',
                         help='regex to grep files', default='*')
-     parser.add_argument('--listOnly', dest='listOnly', action='store_true', default=False,
+    parser.add_argument('--listOnly', dest='listOnly', action='store_true', default=False,
                             help='Only list files that need fixing - does not do actual fix')
     args = parser.parse_args(argv)
 
