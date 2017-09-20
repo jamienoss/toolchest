@@ -72,6 +72,34 @@ def applyGrepFilter(inList, regex):
 
     return outList
 
+def appendInclude(file, includeToAppend):
+     includeRegex = ' *# *include *"'
+     include = '#include "{}"\n'.format(includeToAppend)
+
+     contents = []
+     with open(file, 'r') as f:
+         try:
+             contents = f.readlines()
+         except:
+             print(file)
+             raise
+     f.closed
+
+     lineNumber = 0
+     needsWrite = False
+     for line in contents:
+         if re.search(includeRegex, line):
+             contents.insert(lineNumber, include)
+             needsWrite = True
+             break
+         lineNumber += 1
+ 
+     if needsWrite:
+         with open(file, 'w') as f:
+             contents = "".join(contents)
+             f.write(contents)
+         f.closed
+ 
 def main(argv):
 
     parser = argparse.ArgumentParser(description='C/C++ include organizer')
