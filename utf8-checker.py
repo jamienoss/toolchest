@@ -34,81 +34,48 @@ def applyFileFilter(path, filter, recursive):
 
     return fileList
 
-def requiresInclude(inList, header):
-    outList = []
 
-    includeRegexPrefix = ' *# *include *"'
-    includeRegex = includeRegexPrefix + header
-
-    outList = []
-    for file in inList:
-        with open(file, 'r') as f:
-            try:
-                body = f.read()
-            except:
-                print(file)
-                raise
-        f.closed
-
-        if not re.search(includeRegex, body):
-            outList.append(file)
-
-    return outList
-
-def applyGrepFilter(inList, regex):
+def checkEncoding(inList):
     outList = []
     for file in inList:
         body = None
         with open(file, 'r') as f:
             try:
                 body = f.read()
-            except:
-                print(file)
-                raise
+            except UnicodeDecodeError:
+                outList.append(file)
+                pass
         f.closed
-
-        if re.search(regex, body):
-            outList.append(file)
 
     return outList
 
+
+
 def main(argv):
 
-    parser = argparse.ArgumentParser(description='C/C++ include organizer')
-    parser.add_argument(dest='include', metavar='<include>',
-                        help='header to include, e.g. my_header.h')
-    parser.add_argument('-f', '--files', dest='fileFilter', metavar='<filter>', nargs=1,
+    parser = argparse.ArgumentParser(description='UTF-8 file finder')
+
+    parser.add_argument('-f', '--files', dest='fileFilter', metavar='<filter>', nargs='*',
                         help='regex file filter, e.g. -f "\.c$"', default='.')
     parser.add_argument('-r', dest='recursive', action='store_true', default=False,
                             help='Recursive file search')
     parser.add_argument('-p', '--path', dest='path', metavar='<path>', nargs=1,
                         help='root path to files', default='./')
-    parser.add_argument('--regex', dest='regex', metavar='<expression>', nargs='*',
-                        help='regex to grep files', default='.')
-    parser.add_argument('--listOnly', dest='listOnly', action='store_true', default=False,
-                            help='Only list files that need fixing - does not do actual fix')
     args = parser.parse_args(argv)
 
-    fileFilter = args.fileFilter[0]  # re.compile(args.fileFilter[0])
-    # compiledGrepFilter = args.regex[0]#re.compile(args.regex[0])
-    regex = ''
-    for item in args.regex:
-        regex = regex + item
+    fileFilter = ''
+    for item in args.fileFilter:
+        fileFilter = fileFilter + item
 
     print("Root path '{}'".format(args.path[0]))
-    print("regex '{}'".format(regex))
-    print("File to include '{}'".format(args.include))
     print("file filter regex '{}'".format(fileFilter))
 
     list1 = applyFileFilter(args.path[0], fileFilter, args.recursive)
-    list2 = applyGrepFilter(list1, regex)
-    list3 = requiresInclude(list2, args.include)
+    list2 = checkEncoding(list1)
 
-    for item in list3:
-        if args.listOnly:
-            print(item)
-        else:
-            appendInclude(item, args.include)
+    for item in list2:
+        print(item)
+
 
     # for item in list2:
     #    print(item)
