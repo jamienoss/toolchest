@@ -16,14 +16,16 @@ def applyFileFilter(path, filter, recursive):
     if recursive:
         for root, subDir, files in os.walk(path, topdown=True, followlinks=False):
             for file in files:
-                if filter in file:
+                if re.search(filter, file):
+                # if filter in file:
                     # if filter.match(fname):
                     fullFilePath = os.path.join(root, file)
                     fileList.append(fullFilePath)
     else:
         ls = os.listdir(path)
         for file in ls:
-            if filter in file:
+            if re.search(filter, file):
+            # if filter in file:
                 fullFilePath = os.path.join(path, file)
                 fileList.append(fullFilePath)
 
@@ -41,7 +43,11 @@ def requiresInclude(inList, header):
     outList = []
     for file in inList:
         with open(file, 'r') as f:
-            body = f.read()
+            try:
+                body = f.read()
+            except:
+                print(file)
+                raise
         f.closed
 
         if not re.search(includeRegex, body):
@@ -54,7 +60,11 @@ def applyGrepFilter(inList, regex):
     for file in inList:
         body = None
         with open(file, 'r') as f:
-           body = f.read()
+            try:
+                body = f.read()
+            except:
+                print(file)
+                raise
         f.closed
 
         if re.search(regex, body):
@@ -68,7 +78,11 @@ def appendInclude(file, includeToAppend):
 
     contents = []
     with open(file, 'r') as f:
-        contents = f.readlines()
+        try:
+            contents = f.readlines()
+        except:
+            print(file)
+            raise
     f.closed
 
     lineNumber = 0
@@ -92,18 +106,18 @@ def main(argv):
     parser.add_argument(dest='include', metavar='<include>',
                         help='header to include, e.g. my_header.h')
     parser.add_argument('-f', '--files', dest='fileFilter', metavar='<filter>', nargs=1,
-                        help='regex file filter, e.g. -f *raw.fits', default='*')
+                        help='regex file filter, e.g. -f "\.c$"', default='.')
     parser.add_argument('-r', dest='recursive', action='store_true', default=False,
                             help='Recursive file search')
     parser.add_argument('-p', '--path', dest='path', metavar='<path>', nargs=1,
                         help='root path to files', default='./')
     parser.add_argument('--regex', dest='regex', metavar='<expression>', nargs='*',
-                        help='regex to grep files', default='*')
+                        help='regex to grep files', default='.')
     parser.add_argument('--listOnly', dest='listOnly', action='store_true', default=False,
                             help='Only list files that need fixing - does not do actual fix')
     args = parser.parse_args(argv)
 
-    compiledFileFilter = args.fileFilter[0]  # re.compile(args.fileFilter[0])
+    fileFilter = args.fileFilter[0]  # re.compile(args.fileFilter[0])
     # compiledGrepFilter = args.regex[0]#re.compile(args.regex[0])
     regex = ''
     for item in args.regex:
@@ -112,8 +126,9 @@ def main(argv):
     print("Root path '{}'".format(args.path[0]))
     print("regex '{}'".format(regex))
     print("File to include '{}'".format(args.include))
+    print("file filter regex '{}'".format(fileFilter))
 
-    list1 = applyFileFilter(args.path[0], compiledFileFilter, args.recursive)
+    list1 = applyFileFilter(args.path[0], fileFilter, args.recursive)
     list2 = applyGrepFilter(list1, regex)
     list3 = requiresInclude(list2, args.include)
 
