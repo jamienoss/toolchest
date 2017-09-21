@@ -39,7 +39,7 @@ def checkEncoding(inList):
     outList = []
     for file in inList:
         body = None
-        with open(file, 'r') as f:
+        with open(file, 'r', encoding='utf-8') as f:
             try:
                 body = f.read()
             except UnicodeDecodeError:
