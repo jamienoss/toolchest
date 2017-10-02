@@ -37,7 +37,7 @@ def applyFileFilter(path, filter, recursive):
 def requiresInclude(inList, header):
     outList = []
 
-    includeRegexPrefix = '\s*#\s*include\s+"'
+    includeRegexPrefix = '[\t ]*#[\t ]*include[\t ]+"'
     includeRegex = includeRegexPrefix + header
 
     outList = []
@@ -75,7 +75,7 @@ def applyGrepFilter(inList, regex):
     return outList
 
 def appendInclude(file, includeToAppend):
-     includeRegex = '\s*#\s*include\s+"'
+     includeRegex = '[\t ]*#[\t ]*include[\t ]+"'
      include = '#include "{}"\n'.format(includeToAppend)
 
      contents = []
