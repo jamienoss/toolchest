@@ -75,7 +75,7 @@ def applyGrepFilter(inList, regex):
     return outList
 
 def appendInclude(file, includeToAppend):
-     includeRegex = ' *# *include *"'
+     includeRegex = '\s*#\s*include\s+"'
      include = '#include "{}"\n'.format(includeToAppend)
 
      contents = []
@@ -95,6 +95,10 @@ def appendInclude(file, includeToAppend):
              needsWrite = True
              break
          lineNumber += 1
+
+    # account for no existing includes section
+    # but where to add them? What about .h and guards, e.g. can't just add at
+    # beg of file. run again in --listOnly to make user aware
 
      if needsWrite:
          with open(file, 'w') as f:
@@ -139,6 +143,14 @@ def main(argv):
             print(item)
         else:
             appendInclude(item, args.include)
+
+    if not args.listOnly:
+        list4 = requiresInclude(list2, args.include)
+        if list4:
+            print('ERROR: The following files need manual editing!')
+            for item in list4:
+                print(item)
+
 
     # for item in list2:
     #    print(item)
