@@ -37,11 +37,13 @@ def applyFileFilter(path, filter, recursive):
 def requiresInclude(inList, header):
     outList = []
 
-    includeRegexPrefix = ' *# *include *"'
+    includeRegexPrefix = '\s*#\s*include\s+"'
     includeRegex = includeRegexPrefix + header
 
     outList = []
     for file in inList:
+        if header in file:
+            continue
         with open(file, 'r') as f:
             try:
                 body = f.read()
@@ -93,13 +95,13 @@ def appendInclude(file, includeToAppend):
              needsWrite = True
              break
          lineNumber += 1
- 
+
      if needsWrite:
          with open(file, 'w') as f:
              contents = "".join(contents)
              f.write(contents)
          f.closed
- 
+
 def main(argv):
 
     parser = argparse.ArgumentParser(description='C/C++ include organizer')
